@@ -173,12 +173,15 @@ source_group(scripts FILES ${SQLITECPP_SCRIPT})
 
 # All includes are relative to the "include" directory
 include_directories("${PROJECT_SOURCE_DIR}/include")
+add_definitions(-DSQLITE_OMIT_LOAD_EXTENSION)
 
 # add sources of the wrapper as a "SQLiteCpp" static library
 add_library(SQLiteCpp ${SQLITECPP_SRC} ${SQLITECPP_INC} ${SQLITECPP_DOC} ${SQLITECPP_SCRIPT})
 # make the sqlite3 library part of the interface of the SQLiteCpp wrapper itself (the client app does not need to link to sqlite3)
 # PR https://github.com/SRombauts/SQLiteCpp/pull/111 "linked SQLiteCpp to sqlite3" commented out since it breaks install step from PR #118
 #target_link_libraries(SQLiteCpp PUBLIC sqlite3)
+
+
 
 if (UNIX AND (CMAKE_COMPILER_IS_GNUCXX OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang"))
     set_target_properties(SQLiteCpp PROPERTIES COMPILE_FLAGS "-fPIC")
@@ -266,9 +269,14 @@ if (SQLITECPP_BUILD_EXAMPLES)
     # add the basic example executable
     add_executable(SQLiteCpp_example1 ${SQLITECPP_EXAMPLES})
     target_link_libraries(SQLiteCpp_example1 SQLiteCpp sqlite3)
+
     # Link target with pthread and dl for linux
+    set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+
     if (UNIX)
-        target_link_libraries(SQLiteCpp_example1 pthread)
+        target_link_libraries(SQLiteCpp_example1 Thread::Thread)
         if (NOT APPLE)
             target_link_libraries(SQLiteCpp_example1 dl)
         endif ()
